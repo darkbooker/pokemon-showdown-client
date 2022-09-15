@@ -1524,16 +1524,28 @@ class BattleTooltips {
 		value.set(accuracyAfterChain);
 
 		// Unlike for Atk, Def, etc. accuracy and evasion boosts are applied after modifiers
-		if (pokemon?.boosts.accuracy) {
-			if (pokemon.boosts.accuracy > 0) {
-				value.set(Math.floor(value.value * (pokemon.boosts.accuracy + 3) / 3));
+		let positiveBoostTable = [1, 4 / 3, 5 / 3, 2, 7 / 3, 8 / 3, 3];
+		let negativeBoostTable = [1, 0.75, 0.6, 0.5, 3 / 7, 3 / 8, 1 / 3];
+		if (this.battle.gen === 1) {
+			if (this.battle.tier.includes('Stadium')) {
+				positiveBoostTable = [1, 1.33, 1.66, 2, 2.33, 2.66, 3];
+				negativeBoostTable = [1, 0.75, 0.66, 0.5, 0.43, 0.36, 1 / 3];
 			} else {
-				value.set(Math.floor(value.value * 3 / (3 - pokemon.boosts.accuracy)));
+				positiveBoostTable = [1, 1.5, 2, 2.5, 3, 3.5, 4];
+				negativeBoostTable = [1, 0.66, 0.5, 0.4, 0.33, 0.28, 0.25];
 			}
+		} else if (this.battle.gen <= 4) {
+			positiveBoostTable = [1, 1.33, 1.66, 2, 2.33, 2.66, 3];
+			negativeBoostTable = [1, 0.75, 0.66, 0.5, 0.43, 0.36, 0.33];
+		}
+		if (pokemon.boosts.accuracy > 0) {
+			value.set(Math.floor(value.value * positiveBoostTable[pokemon.boosts.accuracy]));
+		} else {
+			value.set(Math.floor(value.value * negativeBoostTable[-pokemon.boosts.accuracy]));
 		}
 
 		// 1/256 glitch
-		if (this.battle.gen === 1 && !toID(this.battle.tier).includes('stadium')) {
+		if (this.battle.gen === 1 && !this.battle.tier.includes('Stadium')) {
 			value.set((Math.floor(value.value * 255 / 100) / 256) * 100);
 		}
 		return value;
